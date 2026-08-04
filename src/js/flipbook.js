@@ -37,3 +37,30 @@ const pages = Object.keys(images)
     .map(key => images[key]);
 
 pageFlip.loadFromImages(pages);
+// ================================
+// Keyboard Navigation
+// ================================
+window.addEventListener("keydown", (e) => {
+
+    // اگر کاربر داخل یک input یا textarea در حال تایپ است
+    // میانبرها عمل نکنند.
+    const tag = document.activeElement?.tagName;
+
+    if (tag === "INPUT" || tag === "TEXTAREA") {
+        return;
+    }
+
+    switch (e.key) {
+
+        case "ArrowRight":
+            e.preventDefault();
+            pageFlip.flipNext();
+            break;
+
+        case "ArrowLeft":
+            e.preventDefault();
+            pageFlip.flipPrev();
+            break;
+    }
+
+});
