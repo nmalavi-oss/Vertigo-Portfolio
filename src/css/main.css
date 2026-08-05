@@ -21,3 +21,48 @@ body{
     width:1400px;
     height:900px;
 }
+
+/* ==============================
+   Fullscreen Button
+============================== */
+
+#fullscreen-btn{
+
+    position:fixed;
+
+    top:20px;
+    right:20px;
+
+    width:48px;
+    height:48px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    border-radius:10px;
+
+    background:rgba(255,255,255,.12);
+    color:white;
+
+    font-size:24px;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    backdrop-filter:blur(8px);
+
+    transition:.25s;
+
+    z-index:9999;
+
+}
+
+#fullscreen-btn:hover{
+
+    background:rgba(255,255,255,.22);
+
+    transform:scale(1.08);
+
+}
