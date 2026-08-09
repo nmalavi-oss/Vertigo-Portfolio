@@ -1,68 +1,171 @@
 html,
-body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#1d1d1d;
-    font-family:Arial, Helvetica, sans-serif;
+body {
+    margin: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #1d1d1d;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 }
 
-#app{
-    width:100vw;
-    height:100vh;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
+body {
+    position: relative;
 }
 
-#flipbook{
-    width:1400px;
-    height:900px;
+/* =================================
+   App
+================================= */
+
+#app {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    overflow: hidden;
+
+    margin: 0 auto;
+
+    background: #1d1d1d;
 }
 
-/* ==============================
+/* =================================
+   Flipbook
+================================= */
+
+#flipbook {
+    width: 1400px;
+    height: 100vh;
+
+    position: relative;
+
+    flex: 0 0 auto;
+}
+
+/* =================================
+   PageFlip Wrapper Fix
+================================= */
+
+.stf__wrapper {
+    position: relative;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* =================================
    Fullscreen Button
-============================== */
+================================= */
 
-#fullscreen-btn{
+#fullscreen-btn {
+    position: fixed;
 
-    position:fixed;
+    top: 20px;
+    right: 20px;
 
-    top:20px;
-    right:20px;
+    width: 48px;
+    height: 48px;
 
-    width:48px;
-    height:48px;
+    display: flex;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    justify-content: center;
+    align-items: center;
 
-    border-radius:10px;
+    border-radius: 10px;
 
-    background:rgba(255,255,255,.12);
-    color:white;
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .12
+        );
 
-    font-size:24px;
+    color: white;
 
-    cursor:pointer;
+    font-size: 24px;
 
-    user-select:none;
+    cursor: pointer;
 
-    backdrop-filter:blur(8px);
+    user-select: none;
 
-    transition:.25s;
+    -webkit-user-select: none;
 
-    z-index:9999;
+    backdrop-filter:
+        blur(8px);
 
+    -webkit-backdrop-filter:
+        blur(8px);
+
+    transition: .25s;
+
+    z-index: 9999;
+
+    -webkit-tap-highlight-color:
+        transparent;
 }
 
-#fullscreen-btn:hover{
+#fullscreen-btn:hover {
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .22
+        );
 
-    background:rgba(255,255,255,.22);
+    transform:
+        scale(1.08);
+}
 
-    transform:scale(1.08);
+#fullscreen-btn.is-active {
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .28
+        );
+}
 
+/* =================================
+   Safe Area
+================================= */
+
+@supports (
+    padding: env(safe-area-inset-top)
+) {
+
+    #fullscreen-btn {
+
+        top:
+            max(
+                20px,
+                env(
+                    safe-area-inset-top
+                )
+            );
+
+        right:
+            max(
+                20px,
+                env(
+                    safe-area-inset-right
+                )
+            );
+    }
 }

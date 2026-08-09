@@ -3,12 +3,23 @@ import { PageFlip } from "page-flip";
 const app = document.getElementById("app");
 
 app.innerHTML = `
-<div id="fullscreen-btn" title="Fullscreen">
-    ⛶
-</div>
+    <div id="fullscreen-btn" title="Fullscreen">
+        ⛶
+    </div>
 
-<div id="flipbook"></div>
+    <div id="flipbook"></div>
 `;
+
+// =================================
+// Device Detection
+// =================================
+
+const isIPhone =
+    /iPhone|iPod/i.test(navigator.userAgent);
+
+// =================================
+// PageFlip
+// =================================
 
 const pageFlip = new PageFlip(
     document.getElementById("flipbook"),
@@ -18,17 +29,23 @@ const pageFlip = new PageFlip(
 
         size: "stretch",
 
-        minWidth: 350,
+        minWidth: 150,
         maxWidth: 1754,
 
-        minHeight: 450,
+        minHeight: 200,
         maxHeight: 1400,
 
         showCover: true,
 
+        usePortrait: false,
+
         mobileScrollSupport: true
     }
 );
+
+// =================================
+// Pages
+// =================================
 
 const images = import.meta.glob("../pages/*.png", {
     eager: true,
@@ -37,64 +54,502 @@ const images = import.meta.glob("../pages/*.png", {
 
 const pages = Object.keys(images)
     .sort()
-    .map(key => images[key]);
+    .map((key) => images[key]);
 
 pageFlip.loadFromImages(pages);
 
-// ================================
-// Fullscreen
-// ================================
+// =================================
+// Constants
+// =================================
 
-const fullscreenBtn = document.getElementById("fullscreen-btn");
+const SPREAD_RATIO =
+    (1754 * 2) / 1400;
 
-function toggleFullscreen() {
+// =================================
+// Viewport
+// =================================
 
-    if (!document.fullscreenElement) {
+function getViewportSize() {
+    const vv = window.visualViewport;
 
-        document.documentElement.requestFullscreen();
+    return {
+        width: Math.round(
+            vv?.width ||
+            window.innerWidth
+        ),
 
-    } else {
-
-        document.exitFullscreen();
-
-    }
-
+        height: Math.round(
+            vv?.height ||
+            window.innerHeight
+        )
+    };
 }
 
-fullscreenBtn.addEventListener("click", toggleFullscreen);
+function isLandscapeMode() {
+    const { width, height } =
+        getViewportSize();
 
-// ================================
-// Keyboard Navigation
-// ================================
+    return width > height;
+}
 
-window.addEventListener("keydown", (e) => {
+// =================================
+// Canvas Synchronization
+// =================================
 
-    // اگر کاربر داخل input یا textarea در حال تایپ است،
-    // میانبرها عمل نکنند.
-    const tag = document.activeElement?.tagName;
+function syncPageFlipCanvas() {
+    try {
+        const ui =
+            pageFlip.getUI();
 
-    if (tag === "INPUT" || tag === "TEXTAREA") {
+        if (
+            ui &&
+            typeof ui.update === "function"
+        ) {
+            ui.update();
+        }
+
+    } catch (error) {
+        console.warn(
+            "Canvas UI update failed:",
+            error
+        );
+    }
+
+    pageFlip.update();
+}
+
+// =================================
+// Normal Responsive Mode
+//
+// Android
+// Desktop
+// iPhone Portrait
+// =================================
+
+function fitNormalMode() {
+    const { width, height } =
+        getViewportSize();
+
+    const appElement =
+        document.getElementById("app");
+
+    const flipbookElement =
+        document.getElementById("flipbook");
+
+    if (
+        !appElement ||
+        !flipbookElement
+    ) {
         return;
     }
 
-    switch (e.key) {
+    appElement.style.width =
+        `${width}px`;
 
-        case "ArrowRight":
-            e.preventDefault();
-            pageFlip.flipNext();
-            break;
+    appElement.style.height =
+        `${height}px`;
 
-        case "ArrowLeft":
-            e.preventDefault();
-            pageFlip.flipPrev();
-            break;
+    const maxWidthFromHeight =
+        height * SPREAD_RATIO;
 
-        case "f":
-        case "F":
-            e.preventDefault();
-            toggleFullscreen();
-            break;
+    const targetWidth =
+        Math.min(
+            width,
+            maxWidthFromHeight
+        );
 
+    flipbookElement.style.width =
+        `${Math.floor(targetWidth)}px`;
+
+    flipbookElement.style.height =
+        `${height}px`;
+
+    flipbookElement.style.maxWidth =
+        "";
+
+    flipbookElement.style.maxHeight =
+        "";
+
+    flipbookElement.style.transform =
+        "none";
+
+    requestAnimationFrame(() => {
+
+        syncPageFlipCanvas();
+
+        requestAnimationFrame(() => {
+            syncPageFlipCanvas();
+        });
+
+    });
+}
+
+// =================================
+// iPhone Landscape
+// =================================
+
+function fitIPhoneLandscape() {
+    const {
+        width: viewportWidth,
+        height: viewportHeight
+    } = getViewportSize();
+
+    const appElement =
+        document.getElementById("app");
+
+    const flipbookElement =
+        document.getElementById("flipbook");
+
+    if (
+        !appElement ||
+        !flipbookElement
+    ) {
+        return;
     }
 
-});
+    const horizontalPadding = 20;
+    const verticalPadding = 20;
+
+    const availableWidth =
+        Math.max(
+            1,
+            viewportWidth -
+            horizontalPadding
+        );
+
+    const availableHeight =
+        Math.max(
+            1,
+            viewportHeight -
+            verticalPadding
+        );
+
+    let targetWidth =
+        availableWidth;
+
+    let targetHeight =
+        targetWidth /
+        SPREAD_RATIO;
+
+    if (
+        targetHeight >
+        availableHeight
+    ) {
+        targetHeight =
+            availableHeight;
+
+        targetWidth =
+            targetHeight *
+            SPREAD_RATIO;
+    }
+
+    appElement.style.width =
+        `${viewportWidth}px`;
+
+    appElement.style.height =
+        `${viewportHeight}px`;
+
+    flipbookElement.style.width =
+        `${Math.floor(targetWidth)}px`;
+
+    flipbookElement.style.height =
+        `${Math.floor(targetHeight)}px`;
+
+    flipbookElement.style.maxWidth =
+        `${Math.floor(targetWidth)}px`;
+
+    flipbookElement.style.maxHeight =
+        `${Math.floor(targetHeight)}px`;
+
+    flipbookElement.style.transform =
+        "none";
+
+    requestAnimationFrame(() => {
+
+        syncPageFlipCanvas();
+
+        requestAnimationFrame(() => {
+            syncPageFlipCanvas();
+        });
+
+    });
+}
+
+// =================================
+// Responsive Router
+// =================================
+
+function fitFlipbookToViewport() {
+
+    if (
+        isIPhone &&
+        isLandscapeMode()
+    ) {
+        fitIPhoneLandscape();
+    } else {
+        fitNormalMode();
+    }
+}
+
+// =================================
+// Resize Synchronization
+// =================================
+
+function refreshFlipbookSize() {
+
+    fitFlipbookToViewport();
+
+    setTimeout(
+        fitFlipbookToViewport,
+        100
+    );
+
+    setTimeout(
+        fitFlipbookToViewport,
+        300
+    );
+
+    setTimeout(
+        fitFlipbookToViewport,
+        600
+    );
+
+    setTimeout(
+        fitFlipbookToViewport,
+        1000
+    );
+
+    setTimeout(
+        syncPageFlipCanvas,
+        1100
+    );
+}
+
+// =================================
+// Initial Load
+// =================================
+
+setTimeout(
+    refreshFlipbookSize,
+    100
+);
+
+// =================================
+// Resize
+// =================================
+
+window.addEventListener(
+    "resize",
+    refreshFlipbookSize
+);
+
+// =================================
+// Rotation
+// =================================
+
+window.addEventListener(
+    "orientationchange",
+    () => {
+
+        refreshFlipbookSize();
+
+        setTimeout(
+            refreshFlipbookSize,
+            500
+        );
+
+        setTimeout(
+            syncPageFlipCanvas,
+            1200
+        );
+    }
+);
+
+// =================================
+// Visual Viewport
+// =================================
+
+if (window.visualViewport) {
+
+    window.visualViewport.addEventListener(
+        "resize",
+        refreshFlipbookSize
+    );
+}
+
+// =================================
+// Fullscreen
+// =================================
+
+const fullscreenBtn =
+    document.getElementById(
+        "fullscreen-btn"
+    );
+
+// =================================
+// iPhone
+//
+// Fullscreen API برای عناصر معمولی
+// روی iPhone قابل اتکا نیست.
+// دکمه روی iPhone مخفی می‌شود.
+// =================================
+
+if (isIPhone) {
+
+    fullscreenBtn.style.display =
+        "none";
+
+}
+
+// =================================
+// Android / Desktop Fullscreen
+// =================================
+
+async function toggleFullscreen() {
+
+    if (isIPhone) {
+        return;
+    }
+
+    try {
+
+        if (
+            !document.fullscreenElement
+        ) {
+
+            const element =
+                document.documentElement;
+
+            if (
+                element.requestFullscreen
+            ) {
+
+                await element
+                    .requestFullscreen();
+
+            } else if (
+                element.webkitRequestFullscreen
+            ) {
+
+                element
+                    .webkitRequestFullscreen();
+            }
+
+        } else {
+
+            if (
+                document.exitFullscreen
+            ) {
+
+                await document
+                    .exitFullscreen();
+
+            } else if (
+                document.webkitExitFullscreen
+            ) {
+
+                document
+                    .webkitExitFullscreen();
+            }
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Fullscreen is not available:",
+            error
+        );
+    }
+
+    refreshFlipbookSize();
+}
+
+fullscreenBtn.addEventListener(
+    "click",
+    toggleFullscreen
+);
+
+// =================================
+// Fullscreen Events
+// =================================
+
+document.addEventListener(
+    "fullscreenchange",
+    () => {
+
+        if (
+            document.fullscreenElement
+        ) {
+
+            fullscreenBtn
+                .classList
+                .add("is-active");
+
+        } else {
+
+            fullscreenBtn
+                .classList
+                .remove("is-active");
+        }
+
+        refreshFlipbookSize();
+    }
+);
+
+document.addEventListener(
+    "webkitfullscreenchange",
+    refreshFlipbookSize
+);
+
+// =================================
+// Keyboard Navigation
+// =================================
+
+window.addEventListener(
+    "keydown",
+    (e) => {
+
+        const tag =
+            document
+                .activeElement
+                ?.tagName;
+
+        if (
+            tag === "INPUT" ||
+            tag === "TEXTAREA"
+        ) {
+            return;
+        }
+
+        switch (e.key) {
+
+            case "ArrowRight":
+
+                e.preventDefault();
+
+                pageFlip.flipNext();
+
+                break;
+
+            case "ArrowLeft":
+
+                e.preventDefault();
+
+                pageFlip.flipPrev();
+
+                break;
+
+            case "f":
+            case "F":
+
+                if (!isIPhone) {
+
+                    e.preventDefault();
+
+                    toggleFullscreen();
+                }
+
+                break;
+        }
+    }
+);
