@@ -158,11 +158,15 @@ function fitNormalMode() {
             maxWidthFromHeight
         );
 
+    const targetHeight =
+        targetWidth /
+        SPREAD_RATIO;
+
     flipbookElement.style.width =
         `${Math.floor(targetWidth)}px`;
 
     flipbookElement.style.height =
-        `${height}px`;
+        `${Math.floor(targetHeight)}px`;
 
     flipbookElement.style.maxWidth =
         "";
